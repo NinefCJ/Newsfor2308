@@ -402,7 +402,7 @@ $categories_result = $conn->query($categories_sql);
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- TinyMCE 富文本编辑器 -->
-    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+    <script src="https://cdn.tiny.cloud/1/ol8tl2ctgfq9loqm4og7kr7m3tx0i2sio71smnby2s20gue8/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
     <script>
     // 初始化TinyMCE
     tinymce.init({
