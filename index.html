@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2308班新闻中心 - 记录班级点滴，传递校园声音</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --accent-color: #198754;
+            --light-bg: #f8f9fa;
+            --dark-bg: #212529;
+        }
+        
+        * {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #0a58ca 100%);
+            color: white;
+            padding: 5rem 0;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-section::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.05)"/></svg>');
+            background-size: cover;
+        }
+        
+        .feature-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+        }
+        
+        .feature-icon {
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            font-size: 1.8rem;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            line-height: 1;
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            color: var(--secondary-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn-custom {
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary-custom {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary-custom:hover {
+            background: #0b5ed7;
+            border-color: #0b5ed7;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(13, 110, 253, 0.2);
+        }
+        
+        .section-title {
+            position: relative;
+            padding-bottom: 15px;
+            margin-bottom: 2.5rem;
+        }
+        
+        .section-title::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+        
+        .news-preview-card {
+            border-radius: 10px;
+            overflow: hidden;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+        
+        .news-preview-card:hover {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .news-preview-img {
+            height: 200px;
+            object-fit: cover;
+            width: 100%;
+        }
+        
+        .category-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 2;
+        }
+        
+        .admin-panel-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .floating-animation {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 3rem 0;
+            }
+            
+            .stat-number {
+                font-size: 2.5rem;
+            }
+            
+            .display-4 {
+                font-size: 2.5rem;
+            }
+        }
+        
+        /* 打印样式 */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <i class="bi bi-newspaper fs-3 me-2"></i>
+                <span class="fw-bold">2308班新闻中心</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#home"><i class="bi bi-house me-1"></i> 首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features"><i class="bi bi-stars me-1"></i> 功能特色</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#preview"><i class="bi bi-eye me-1"></i> 网站预览</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#stats"><i class="bi bi-graph-up me-1"></i> 数据统计</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.php"><i class="bi bi-arrow-right-circle me-1"></i> 进入网站</a>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <a class="btn btn-outline-light btn-sm" href="admin/login.php">
+                            <i class="bi bi-lock me-1"></i> 管理登录
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 英雄区域 -->
+    <section id="home" class="hero-section">
+        <div class="container position-relative">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">2308班新闻中心</h1>
+                    <p class="lead mb-4">记录班级点滴，传递校园声音。我们致力于打造一个专业的班级新闻发布平台，让每一份精彩都被看见。</p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="index.php" class="btn btn-light btn-custom fw-bold">
+                            <i class="bi bi-newspaper me-2"></i> 浏览新闻
+                        </a>
+                        <a href="#features" class="btn btn-outline-light btn-custom">
+                            <i class="bi bi-info-circle me-2"></i> 了解更多
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6 text-center mt-5 mt-lg-0">
+                    <div class="floating-animation">
+                        <i class="bi bi-newspaper display-1 opacity-25"></i>
+                        <i class="bi bi-camera display-1 opacity-25 mx-4"></i>
+                        <i class="bi bi-pencil display-1 opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 功能特色 -->
+    <section id="features" class="py-5">
+        <div class="container">
+            <h2 class="text-center section-title">核心功能特色</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card feature-card shadow-sm border-0">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon bg-primary bg-opacity-10 text-primary">
+                                <i class="bi bi-pencil-square"></i>
+                            </div>
+                            <h4 class="card-title mb-3">新闻发布系统</h4>
+                            <p class="card-text text-muted">
+                                强大的后台管理系统，支持富文本编辑、图片上传、分类管理，让新闻发布变得简单高效。
+                            </p>
+                            <ul class="list-unstyled text-start">
+                                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 可视化编辑器</li>
+                                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 一键发布</li>
+                                <li><i class="bi bi-check-circle-fill text-success me-2"></i> 定时发布</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card feature-card shadow-sm border-0">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon bg-success bg-opacity-10 text-success">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <h4 class="card-title mb-3">安全权限管理</h4>
+                            <p class="card-text text-muted">
+                                完善的后台登录验证系统，保护新闻数据安全。管理员权限分级，操作日志记录。
+                            </p>
+                            <ul class="list-unstyled text-start">
+                                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 密码加密存储</li>
+                                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 会话安全管理</li>
+                                <li><i class="bi bi-check-circle-fill text-success me-2"></i> 操作权限控制</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card feature-card shadow-sm border-0">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon bg-warning bg-opacity-10 text-warning">
+                                <i class="bi bi-speedometer2"></i>
+                            </div>
+                            <h4 class="card-title mb-3">实时数据统计</h4>
+                            <p class="card-text text-muted">
+                                文章浏览量实时统计，热门文章自动排行，数据可视化展示，了解读者喜好。
+                            </p>
+                            <ul class="list-unstyled text-start">
+                                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 浏览量统计</li>
+                                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 热门文章排行</li>
+                                <li><i class="bi bi-check-circle-fill text-success me-2"></i> 分类数据统计</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 网站预览 -->
+    <section id="preview" class="py-5 bg-white">
+        <div class="container">
+            <h2 class="text-center section-title">网站界面预览</h2>
+            <div class="row g-5">
+                <div class="col-lg-6">
+                    <div class="card news-preview-card shadow border-0">
+                        <div class="position-relative">
+                            <div class="category-badge">
+                                <span class="badge bg-primary">班级动态</span>
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80" 
+                                 alt="新闻预览" class="news-preview-img">
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">新学期第一次班会圆满举行</h5>
+                            <p class="card-text text-muted">2月20日，2308班在教室举行了新学期第一次班会，班主任王老师对新学期提出了新的要求和期望...</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted"><i class="bi bi-clock"></i> 2026-02-21</small>
+                                <small class="text-muted"><i class="bi bi-eye"></i> 156 次浏览</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card news-preview-card shadow border-0">
+                        <div class="position-relative">
+                            <div class="category-badge">
+                                <span class="badge bg-success">比赛荣誉</span>
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1542744095-fcf48d80b0fd?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80" 
+                                 alt="比赛荣誉" class="news-preview-img">
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">校运动会：我班荣获团体总分第一名</h5>
+                            <p class="card-text text-muted">在校第45届运动会上，2308班运动员们奋勇拼搏，最终以总分98分的优异成绩夺得团体第一名...</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted"><i class="bi bi-clock"></i> 2026-02-18</small>
+                                <small class="text-muted"><i class="bi bi-eye"></i> 243 次浏览</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-5">
+                <a href="index.php" class="btn btn-primary btn-custom btn-lg">
+                    <i class="bi bi-arrow-right-circle me-2"></i> 查看所有新闻
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 数据统计 -->
+    <section id="stats" class="py-5">
+        <div class="container">
+            <h2 class="text-center section-title">网站数据统计</h2>
+            <div class="row text-center g-4">
+                <div class="col-md-3">
+                    <div class="card border-0 bg-transparent">
+                        <div class="card-body">
+                            <div class="stat-number">42</div>
+                            <div class="stat-label">新闻文章</div>
+                            <p class="text-muted mt-2 small">持续更新中</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 bg-transparent">
+                        <div class="card-body">
+                            <div class="stat-number">5</div>
+                            <div class="stat-label">新闻分类</div>
+                            <p class="text-muted mt-2 small">覆盖多方面内容</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 bg-transparent">
+                        <div class="card-body">
+                            <div class="stat-number">1,258</div>
+                            <div class="stat-label">总浏览量</div>
+                            <p class="text-muted mt-2 small">持续增长中</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 bg-transparent">
+                        <div class="card-body">
+                            <div class="stat-number">24/7</div>
+                            <div class="stat-label">运行时间</div>
+                            <p class="text-muted mt-2 small">稳定可靠</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 后台管理预览 -->
+    <section class="py-5 bg-white">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                    <h2 class="mb-4">强大的后台管理系统</h2>
+                    <p class="lead mb-4">专为2308班新闻部设计的后台管理系统，操作简单，功能强大。</p>
+                    <ul class="list-unstyled">
+                        <li class="mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i> 直观的文章编辑界面</li>
+                        <li class="mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i> 支持图片和富文本编辑</li>
+                        <li class="mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i> 实时数据统计和图表</li>
+                        <li class="mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i> 多管理员权限管理</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> 响应式设计，手机电脑均可操作</li>
+                    </ul>
+                    <div class="mt-4">
+                        <a href="admin/login.php" class="btn btn-primary btn-custom me-3">
+                            <i class="bi bi-box-arrow-in-right me-2"></i> 登录后台
+                        </a>
+                        <a href="#features" class="btn btn-outline-primary btn-custom">
+                            <i class="bi bi-play-circle me-2"></i> 查看演示
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card admin-panel-card shadow-lg">
+                        <div class="card-body p-4">
+                            <h4 class="text-white mb-4"><i class="bi bi-speedometer2 me-2"></i> 后台管理面板</h4>
+                            <div class="bg-white rounded p-3 text-dark mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>文章管理</span>
+                                    <span class="badge bg-primary">42 篇</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>今日发布</span>
+                                    <span class="badge bg-success">3 篇</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>待审核</span>
+                                    <span class="badge bg-warning">2 篇</span>
+                                </div>
+                            </div>
+                            <div class="text-white-50 small">
+                                <i class="bi bi-info-circle me-1"></i>
+                                仅限新闻部成员访问，需要管理员账号密码
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 技术架构 -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center section-title">技术架构</h2>
+            <div class="row text-center g-4">
+                <div class="col-md-2 col-4">
+                    <div class="p-3">
+                        <i class="bi bi-filetype-html display-4 text-danger"></i>
+                        <div class="mt-2 fw-bold">HTML5</div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-4">
+                    <div class="p-3">
+                        <i class="bi bi-filetype-css display-4 text-primary"></i>
+                        <div class="mt-2 fw-bold">CSS3</div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-4">
+                    <div class="p-3">
+                        <i class="bi bi-filetype-php display-4 text-info"></i>
+                        <div class="mt-2 fw-bold">PHP</div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-4">
+                    <div class="p-3">
+                        <i class="bi bi-database display-4 text-warning"></i>
+                        <div class="mt-2 fw-bold">MySQL</div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-4">
+                    <div class="p-3">
+                        <i class="bi bi-bootstrap display-4 text-purple"></i>
+                        <div class="mt-2 fw-bold">Bootstrap</div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-4">
+                    <div class="p-3">
+                        <i class="bi bi-hdd-network display-4 text-success"></i>
+                        <div class="mt-2 fw-bold">InfinityFree</div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-center text-muted mt-4">
+                基于现代Web技术栈构建，确保网站的稳定性、安全性和可扩展性。
+            </p>
+        </div>
+    </section>
+
+    <!-- 行动号召 -->
+    <section class="py-5 bg-primary text-white">
+        <div class="container text-center">
+            <h2 class="display-5 fw-bold mb-4">立即体验2308班新闻中心</h2>
+            <p class="lead mb-5">浏览最新班级动态，了解校园热点，参与新闻互动。</p>
+            <div class="d-flex flex-column flex-md-row justify-content-center gap-3">
+                <a href="index.php" class="btn btn-light btn-custom btn-lg fw-bold">
+                    <i class="bi bi-newspaper me-2"></i> 浏览新闻网站
+                </a>
+                <a href="about.php" class="btn btn-outline-light btn-custom btn-lg">
+                    <i class="bi bi-info-circle me-2"></i> 关于新闻部
+                </a>
+            </div>
+            <p class="mt-4 small opacity-75">
+                <i class="bi bi-shield-check me-1"></i>
+                本网站由2308班新闻部自主开发维护
+            </p>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5 class="mb-3"><i class="bi bi-newspaper me-2"></i> 2308班新闻中心</h5>
+                    <p class="text-light small">
+                        记录班级点滴，传递校园声音。<br>
+                        这里是2308班官方新闻发布平台，由班级新闻部独立运营。
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="text-white opacity-75"><i class="bi bi-wechat fs-5"></i></a>
+                        <a href="#" class="text-white opacity-75"><i class="bi bi-qq fs-5"></i></a>
+                        <a href="#" class="text-white opacity-75"><i class="bi bi-envelope fs-5"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
+                    <h6 class="mb-3">快速链接</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="index.php" class="text-white opacity-75 text-decoration-none">新闻首页</a></li>
+                        <li class="mb-2"><a href="about.php" class="text-white opacity-75 text-decoration-none">关于我们</a></li>
+                        <li class="mb-2"><a href="admin/login.php" class="text-white opacity-75 text-decoration-none">管理登录</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-4 mb-4 mb-md-0">
+                    <h6 class="mb-3">技术支持</h6>
+                    <ul class="list-unstyled text-light small">
+                        <li class="mb-2"><i class="bi bi-code-slash me-2"></i> PHP + MySQL</li>
+                        <li class="mb-2"><i class="bi bi-bootstrap me-2"></i> Bootstrap 5</li>
+                        <li class="mb-2"><i class="bi bi-hdd me-2"></i> InfinityFree Hosting</li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-4">
+                    <h6 class="mb-3">联系方式</h6>
+                    <ul class="list-unstyled text-light small">
+                        <li class="mb-2"><i class="bi bi-geo-alt me-2"></i> 2308班教室 · 新闻部</li>
+                        <li class="mb-2"><i class="bi bi-clock me-2"></i> 每周例会时间</li>
+                        <li class="mb-2"><i class="bi bi-envelope me-2"></i> news2308@your-school.edu</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="bg-light my-4 opacity-25">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                    <p class="mb-0 small opacity-75">
+                        &copy; 2026 2308班新闻部. 保留所有权利.
+                    </p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <p class="mb-0 small opacity-75">
+                        最后更新: 2026年2月
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- 平滑滚动 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 平滑滚动
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+                    
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 70,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+            
+            // 导航栏滚动效果
+            window.addEventListener('scroll', function() {
+                const navbar = document.querySelector('.navbar');
+                if (window.scrollY > 100) {
+                    navbar.classList.add('navbar-scrolled');
+                } else {
+                    navbar.classList.remove('navbar-scrolled');
+                }
+            });
+            
+            // 动态统计数字（如果页面中有需要动画的数字）
+            const statElements = document.querySelectorAll('.stat-number');
+            statElements.forEach(stat => {
+                const target = parseInt(stat.textContent);
+                let current = 0;
+                const increment = target / 100;
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(timer);
+                    }
+                    stat.textContent = Math.floor(current);
+                }, 20);
+            });
+        });
+    </script>
+</body>
+</html>
