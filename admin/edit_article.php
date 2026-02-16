@@ -1,0 +1,715 @@
+<?php
+require_once '../includes/config.php';
+require_once '../includes/auth_check.php'; // 必须登录
+
+// 获取要编辑的文章ID
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    header('Location: dashboard.php');
+    exit();
+}
+$article_id = intval($_GET['id']);
+
+// 查询文章信息
+$sql = "SELECT * FROM articles WHERE id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $article_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$article = $result->fetch_assoc();
+$stmt->close();
+
+if (!$article) {
+    header('Location: dashboard.php');
+    exit();
+}
+
+$success = '';
+$error = '';
+
+// 处理表单提交
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $title = mysqli_real_escape_string($conn, $_POST['title']);
+    $content = mysqli_real_escape_string($conn, $_POST['content']);
+    $category_id = intval($_POST['category_id']);
+    $author = mysqli_real_escape_string($conn, $_POST['author']);
+    $is_featured = isset($_POST['is_featured']) ? 1 : 0;
+    $cover_image_path = $article['cover_image']; // 默认为原图片
+    
+    // 处理封面图片上传
+    if (isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] == 0) {
+        $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $file_type = $_FILES['cover_image']['type'];
+        
+        if (in_array($file_type, $allowed_types)) {
+            $upload_dir = '../assets/uploads/';
+            
+            // 删除旧图片（如果存在且不是默认图片）
+            if ($article['cover_image'] && file_exists('../' . $article['cover_image']) 
+                && strpos($article['cover_image'], 'default_') === false) {
+                @unlink('../' . $article['cover_image']);
+            }
+            
+            // 生成唯一文件名
+            $file_extension = pathinfo($_FILES['cover_image']['name'], PATHINFO_EXTENSION);
+            $unique_filename = 'article_' . time() . '_' . uniqid() . '.' . $file_extension;
+            $target_file = $upload_dir . $unique_filename;
+            
+            if (move_uploaded_file($_FILES['cover_image']['tmp_name'], $target_file)) {
+                $cover_image_path = 'assets/uploads/' . $unique_filename;
+            } else {
+                $error = "封面上传失败，请检查文件夹权限。";
+            }
+        } else {
+            $error = "只允许上传 JPG, PNG, GIF, WebP 格式的图片。";
+        }
+    }
+    
+    // 处理删除封面图片
+    if (isset($_POST['delete_cover']) && $_POST['delete_cover'] == '1') {
+        if ($article['cover_image'] && file_exists('../' . $article['cover_image'])) {
+            @unlink('../' . $article['cover_image']);
+        }
+        $cover_image_path = null;
+    }
+    
+    if (empty($error)) {
+        // 更新文章
+        $update_sql = "UPDATE articles SET 
+                      title = ?, 
+                      content = ?, 
+                      category_id = ?, 
+                      author = ?, 
+                      cover_image = ?, 
+                      is_featured = ? 
+                      WHERE id = ?";
+        $stmt = $conn->prepare($update_sql);
+        $stmt->bind_param("ssissii", $title, $content, $category_id, $author, $cover_image_path, $is_featured, $article_id);
+        
+        if ($stmt->execute()) {
+            $success = "文章更新成功！";
+            // 重新查询最新数据
+            $sql = "SELECT * FROM articles WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("i", $article_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $article = $result->fetch_assoc();
+        } else {
+            $error = "更新失败: " . $conn->error;
+        }
+        $stmt->close();
+    }
+}
+
+// 查询所有分类
+$categories_sql = "SELECT id, name FROM categories ORDER BY name";
+$categories_result = $conn->query($categories_sql);
+?>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- 自定义上传样式 -->
+<style>
+    .tox-tinymce {
+        border: 1px solid #dee2e6 !important;
+        border-radius: 0.375rem;
+    }
+    
+    /* 视频上传样式 */
+    .video-upload-area {
+        border: 2px dashed #007bff;
+        border-radius: 10px;
+        padding: 30px;
+        text-align: center;
+        background: #f8f9fa;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .video-upload-area:hover {
+        background: #e9ecef;
+        border-color: #0056b3;
+    }
+    
+    .video-upload-area i {
+        font-size: 3rem;
+        color: #007bff;
+        margin-bottom: 15px;
+    }
+    
+    /* 视频预览 */
+    .video-preview {
+        max-width: 100%;
+        border-radius: 8px;
+        margin: 10px 0;
+    }
+    
+    /* 进度条动画 */
+    .progress-bar-animated {
+        animation: progress-bar-stripes 1s linear infinite;
+    }
+    
+    @keyframes progress-bar-stripes {
+        0% { background-position: 1rem 0; }
+        100% { background-position: 0 0; }
+    }
+</style>
+
+    <meta charset="UTF-8">
+    <title>编辑文章 - 2308新闻后台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+tinymce.init({
+    selector: '#newsContent',
+    height: 600,
+    menubar: 'file edit view insert format tools table',
+    
+    // 添加更多插件
+    plugins: [
+        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview', 'anchor',
+        'searchreplace', 'visualblocks', 'code', 'fullscreen', 'insertdatetime', 'media',
+        'table', 'code', 'help', 'wordcount', 'emoticons', 'quickbars', 'autoresize'
+    ],
+    
+    // 重新组织工具栏
+    toolbar: 'undo redo | blocks fontfamily fontsize | ' +
+             'bold italic underline strikethrough | ' +
+             'alignleft aligncenter alignright alignjustify | ' +
+             'bullist numlist outdent indent | ' +
+             'link image media table mergetags | ' +
+             'removeformat | emoticons | preview code help',
+    
+    // 快速工具栏
+    quickbars_selection_toolbar: 'bold italic underline | quicklink h2 h3 blockquote',
+    quickbars_insert_toolbar: 'quickimage quicktable',
+    quickbars_image_toolbar: 'alignleft aligncenter alignright',
+    
+    // 内容样式
+    content_style: `
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            font-size: 16px; 
+            line-height: 1.6;
+        }
+        img { max-width: 100%; height: auto; }
+        video { max-width: 100%; height: auto; }
+    `,
+    
+    // 图片上传配置
+    images_upload_url: 'upload_image.php',
+    automatic_uploads: true,
+    images_reuse_filename: true,
+    images_upload_base_path: '../assets/uploads/',
+    images_upload_credentials: true,
+    
+    // 媒体文件上传配置
+    file_picker_types: 'file image media',
+    
+    // 自定义文件选择器
+    file_picker_callback: function (callback, value, meta) {
+        // 处理图片上传
+        if (meta.filetype == 'image') {
+            $('#uploadImageInput').click();
+            $('#uploadImageInput').off('change').on('change', function() {
+                var file = this.files[0];
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    callback(e.target.result, { alt: file.name });
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // 处理视频上传
+        if (meta.filetype == 'media') {
+            $('#uploadVideoInput').click();
+            $('#uploadVideoInput').off('change').on('change', function() {
+                var file = this.files[0];
+                
+                // 创建FormData对象
+                var formData = new FormData();
+                formData.append('video', file);
+                
+                // 显示上传进度
+                $('#uploadProgress').show();
+                $('#progressBar').css('width', '0%').text('0%');
+                
+                // 上传视频
+                $.ajax({
+                    url: 'upload_video.php',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    xhr: function() {
+                        var xhr = new window.XMLHttpRequest();
+                        xhr.upload.addEventListener("progress", function(evt) {
+                            if (evt.lengthComputable) {
+                                var percentComplete = Math.round((evt.loaded / evt.total) * 100);
+                                $('#progressBar').css('width', percentComplete + '%').text(percentComplete + '%');
+                            }
+                        }, false);
+                        return xhr;
+                    },
+                    success: function(response) {
+                        $('#uploadProgress').hide();
+                        if (response.success) {
+                            // 插入视频到编辑器
+                            var videoHtml = '<video controls style="max-width:100%;">' +
+                                            '<source src="' + response.url + '" type="video/' + file.type.split('/')[1] + '">' +
+                                            '您的浏览器不支持视频标签。' +
+                                            '</video>';
+                            callback(videoHtml, {});
+                        } else {
+                            alert('视频上传失败: ' + response.error);
+                        }
+                    },
+                    error: function() {
+                        $('#uploadProgress').hide();
+                        alert('上传失败，请稍后重试');
+                    }
+                });
+            });
+        }
+    },
+    
+    // 允许更多HTML标签
+    extended_valid_elements: 'video[*],source[*],iframe[*]',
+    
+    // 自动调整大小
+    autoresize_bottom_margin: 50,
+    autoresize_on_init: true,
+    
+    // 预览样式
+    preview_styles: 'font-family font-size font-weight text-decoration text-transform color background-color padding margin border',
+    
+    // 设置块级元素
+    block_formats: '标题1=h1; 标题2=h2; 标题3=h3; 段落=p; 预格式=pre; 引用=blockquote',
+    
+    // 自定义字体大小
+    font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
+    
+    // 设置
+    branding: false,
+    elementpath: true,
+    promotion: false,
+    resize: true
+});
+</script>
+<!-- 隐藏的文件上传控件 -->
+<input type="file" id="uploadImageInput" accept="image/*" style="display:none;">
+<input type="file" id="uploadVideoInput" accept="video/*" style="display:none;">
+
+<!-- 上传进度条 -->
+<div id="uploadProgress" class="position-fixed top-0 start-0 w-100" style="display:none; z-index:9999;">
+    <div class="container mt-3">
+        <div class="card shadow">
+            <div class="card-body">
+                <h6 class="card-title">上传进度</h6>
+                <div class="progress" style="height: 20px;">
+                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 0%;">0%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<body class="bg-light">
+    <div class="container-fluid">
+        <!-- 导航栏 -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+            <div class="container">
+                <a class="navbar-brand" href="dashboard.php">📝 2308新闻后台</a>
+                <div class="navbar-nav ms-auto">
+                    <span class="navbar-text me-3">欢迎，<?php echo htmlspecialchars($_SESSION['admin_username']); ?></span>
+                    <a href="dashboard.php" class="btn btn-sm btn-outline-light me-2">返回列表</a>
+                    <a href="logout.php" class="btn btn-sm btn-danger">退出</a>
+                </div>
+            </div>
+        </nav>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card shadow">
+                    <div class="card-header bg-white border-bottom">
+                        <h4 class="mb-0"><i class="bi bi-pencil-square"></i> 编辑文章</h4>
+                    </div>
+                    <div class="card-body">
+                        <?php if ($success): ?>
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <?php echo $success; ?>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        <?php elseif ($error): ?>
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <?php echo $error; ?>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <form method="POST" action="" enctype="multipart/form-data">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <!-- 标题 -->
+                                    <div class="mb-3">
+                                        <label for="title" class="form-label fw-bold">文章标题 *</label>
+                                        <input type="text" class="form-control form-control-lg" id="title" name="title" 
+                                               value="<?php echo htmlspecialchars($article['title']); ?>" required>
+                                    </div>
+                                    
+                                    <!-- 正文 -->
+                                    <div class="mb-3">
+                                        <label for="newsContent" class="form-label fw-bold">文章正文 *</label>
+                                        <textarea class="form-control" id="newsContent" name="content" rows="15"><?php echo htmlspecialchars($article['content']); ?></textarea>
+                                        <div class="form-text">支持富文本编辑，可插入图片、链接等。</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <!-- 封面图片 -->
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-light">
+                                            <label class="form-label fw-bold mb-0">封面图片</label>
+                                        </div>
+                                        <div class="card-body">
+                                            <?php if($article['cover_image']): ?>
+                                                <div class="mb-3 text-center">
+                                                    <img src="../<?php echo htmlspecialchars($article['cover_image']); ?>" 
+                                                         class="img-fluid rounded border" 
+                                                         style="max-height: 200px; width: auto;">
+                                                    <div class="form-check mt-2">
+                                                        <input class="form-check-input" type="checkbox" name="delete_cover" value="1" id="deleteCover">
+                                                        <label class="form-check-label text-danger" for="deleteCover">
+                                                            删除当前封面
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            <?php else: ?>
+                                                <div class="text-center text-muted mb-3">
+                                                    <i class="bi bi-image display-6"></i>
+                                                    <p class="small mt-2">暂无封面</p>
+                                                </div>
+                                            <?php endif; ?>
+                                            
+                                            <div class="mb-3">
+                                                <input class="form-control" type="file" id="cover_image" name="cover_image" accept="image/*">
+                                                <div class="form-text">支持 JPG, PNG, GIF, WebP 格式，建议尺寸 1200×630</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 文章属性 -->
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-light">
+                                            <label class="form-label fw-bold mb-0">文章属性</label>
+                                        </div>
+                                        <div class="card-body">
+                                            <!-- 分类 -->
+                                            <div class="mb-3">
+                                                <label for="category_id" class="form-label">分类 *</label>
+                                                <select name="category_id" id="category_id" class="form-select" required>
+                                                    <option value="">选择分类</option>
+                                                    <?php if ($categories_result && $categories_result->num_rows > 0): ?>
+                                                        <?php while($cat = $categories_result->fetch_assoc()): ?>
+                                                            <option value="<?php echo $cat['id']; ?>" 
+                                                                    <?php echo $article['category_id'] == $cat['id'] ? 'selected' : ''; ?>>
+                                                                <?php echo htmlspecialchars($cat['name']); ?>
+                                                            </option>
+                                                        <?php endwhile; ?>
+                                                    <?php endif; ?>
+                                                </select>
+                                            </div>
+                                            
+                                            <!-- 作者 -->
+                                            <div class="mb-3">
+                                                <label for="author" class="form-label">作者</label>
+                                                <input type="text" class="form-control" id="author" name="author" 
+                                                       value="<?php echo htmlspecialchars($article['author']); ?>">
+                                            </div>
+                                            
+                                            <!-- 置顶 -->
+                                            <div class="mb-3">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" role="switch" 
+                                                           id="is_featured" name="is_featured" value="1" 
+                                                           <?php echo $article['is_featured'] ? 'checked' : ''; ?>>
+                                                    <label class="form-check-label" for="is_featured">
+                                                        设为置顶文章
+                                                    </label>
+                                                </div>
+                                                <div class="form-text">置顶文章将显示在首页顶部</div>
+                                            </div>
+                                            
+                                            <!-- 发布日期 -->
+                                            <div class="mb-3">
+                                                <label class="form-label">发布日期</label>
+                                                <input type="text" class="form-control" 
+                                                       value="<?php echo date('Y年m月d日 H:i:s', strtotime($article['publish_date'])); ?>" 
+                                                       disabled>
+                                                <div class="form-text">文章发布于 <?php echo date('Y年m月d日', strtotime($article['publish_date'])); ?></div>
+                                            </div>
+                                            
+                                            <!-- 浏览量 -->
+                                            <div class="mb-3">
+                                                <label class="form-label">浏览量</label>
+                                                <input type="text" class="form-control" 
+                                                       value="<?php echo number_format($article['view_count']); ?> 次" 
+                                                       disabled>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 操作按钮 -->
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="bi bi-check-circle"></i> 保存修改
+                                        </button>
+                                        <a href="dashboard.php" class="btn btn-outline-secondary">
+                                            <i class="bi bi-x-circle"></i> 取消
+                                        </a>
+                                        <a href="../article.php?id=<?php echo $article_id; ?>" target="_blank" class="btn btn-outline-info">
+                                            <i class="bi bi-eye"></i> 预览文章
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- 删除文章（危险操作） -->
+                <div class="card border-danger mt-4">
+                    <div class="card-header bg-danger text-white">
+                        <i class="bi bi-exclamation-triangle"></i> 危险操作
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title text-danger">删除文章</h5>
+                        <p class="card-text">
+                            此操作将永久删除这篇文章，包括所有评论和相关数据。删除后无法恢复！
+                        </p>
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash"></i> 删除这篇文章
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 删除确认模态框 -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">确认删除</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>您确定要删除文章 <strong>"<?php echo htmlspecialchars($article['title']); ?>"</strong> 吗？</p>
+                    <p class="text-danger">此操作不可逆！</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <a href="delete_article.php?id=<?php echo $article_id; ?>" class="btn btn-danger">确认删除</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 视频上传模态框 -->
+<div class="modal fade" id="videoUploadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-camera-video"></i> 上传视频</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- 拖放上传区域 -->
+                <div id="videoDropArea" class="video-upload-area" 
+                     ondragover="event.preventDefault()" 
+                     ondrop="handleVideoDrop(event)">
+                    <i class="bi bi-cloud-arrow-up"></i>
+                    <h5>拖放视频文件到这里</h5>
+                    <p class="text-muted">或点击选择文件</p>
+                    <p class="text-muted small">支持 MP4, WebM, OGG 等格式，最大 50MB</p>
+                    <button type="button" class="btn btn-primary mt-2" onclick="$('#videoFileInput').click()">
+                        选择视频文件
+                    </button>
+                </div>
+                
+                <input type="file" id="videoFileInput" accept="video/*" style="display:none;" 
+                       onchange="handleVideoSelect(this.files[0])">
+                
+                <!-- 视频预览 -->
+                <div id="videoPreview" class="mt-3" style="display:none;">
+                    <h6>视频预览</h6>
+                    <video id="previewVideo" controls class="video-preview"></video>
+                    <div class="mt-2">
+                        <strong>文件名:</strong> <span id="videoName"></span><br>
+                        <strong>大小:</strong> <span id="videoSize"></span><br>
+                        <strong>格式:</strong> <span id="videoFormat"></span>
+                    </div>
+                </div>
+                
+                <!-- 视频信息表单 -->
+                <div class="mt-3">
+                    <label for="videoTitle" class="form-label">视频标题（可选）</label>
+                    <input type="text" class="form-control" id="videoTitle" placeholder="输入视频标题">
+                    
+                    <label for="videoDescription" class="form-label">视频描述（可选）</label>
+                    <textarea class="form-control" id="videoDescription" rows="2" placeholder="输入视频描述"></textarea>
+                </div>
+                
+                <!-- 上传选项 -->
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" id="autoInsert" checked>
+                    <label class="form-check-label" for="autoInsert">
+                        上传完成后自动插入到编辑器
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="uploadVideoBtn" onclick="uploadVideo()" disabled>
+                    开始上传
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 视频上传相关函数
+var selectedVideoFile = null;
+
+// 处理文件选择
+function handleVideoSelect(file) {
+    if (!file) return;
+    
+    if (!file.type.startsWith('video/')) {
+        alert('请选择视频文件');
+        return;
+    }
+    
+    selectedVideoFile = file;
+    previewVideo(file);
+    $('#uploadVideoBtn').prop('disabled', false);
+}
+
+// 处理拖放
+function handleVideoDrop(e) {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    handleVideoSelect(file);
+}
+
+// 预览视频
+function previewVideo(file) {
+    const videoUrl = URL.createObjectURL(file);
+    const preview = document.getElementById('previewVideo');
+    const videoName = document.getElementById('videoName');
+    const videoSize = document.getElementById('videoSize');
+    const videoFormat = document.getElementById('videoFormat');
+    
+    preview.src = videoUrl;
+    videoName.textContent = file.name;
+    videoSize.textContent = formatBytes(file.size);
+    videoFormat.textContent = file.type;
+    
+    $('#videoPreview').show();
+}
+
+// 格式化字节大小
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+// 上传视频
+function uploadVideo() {
+    if (!selectedVideoFile) return;
+    
+    const formData = new FormData();
+    formData.append('video', selectedVideoFile);
+    formData.append('title', $('#videoTitle').val());
+    formData.append('description', $('#videoDescription').val());
+    
+    const uploadBtn = $('#uploadVideoBtn');
+    uploadBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> 上传中...');
+    
+    $.ajax({
+        url: 'upload_video.php',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        xhr: function() {
+            const xhr = new window.XMLHttpRequest();
+            xhr.upload.addEventListener("progress", function(evt) {
+                if (evt.lengthComputable) {
+                    const percent = Math.round((evt.loaded / evt.total) * 100);
+                    uploadBtn.text('上传中 ' + percent + '%');
+                }
+            }, false);
+            return xhr;
+        },
+        success: function(response) {
+            if (response.success) {
+                if ($('#autoInsert').is(':checked')) {
+                    // 插入视频到TinyMCE编辑器
+                    const videoHtml = `<div class="video-container">
+                        <video controls width="100%" poster="${response.thumb}">
+                            <source src="${response.url}" type="video/${selectedVideoFile.type.split('/')[1]}">
+                            您的浏览器不支持视频标签
+                        </video>
+                        <p class="video-caption text-muted small">${selectedVideoFile.name}</p>
+                    </div>`;
+                    
+                    tinymce.activeEditor.execCommand('mceInsertContent', false, videoHtml);
+                }
+                
+                alert('视频上传成功！');
+                $('#videoUploadModal').modal('hide');
+                resetVideoForm();
+            } else {
+                alert('上传失败: ' + response.error);
+            }
+        },
+        error: function(xhr, status, error) {
+            alert('上传失败: ' + error);
+        },
+        complete: function() {
+            uploadBtn.prop('disabled', false).text('开始上传');
+        }
+    });
+}
+
+// 重置表单
+function resetVideoForm() {
+    selectedVideoFile = null;
+    $('#videoPreview').hide();
+    $('#videoTitle').val('');
+    $('#videoDescription').val('');
+    $('#videoFileInput').val('');
+    $('#uploadVideoBtn').prop('disabled', true);
+}
+
+// 打开视频上传模态框
+function openVideoUpload() {
+    resetVideoForm();
+    $('#videoUploadModal').modal('show');
+}
+</script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
