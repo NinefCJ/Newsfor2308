@@ -1,0 +1,86 @@
+# Apache 服务器配置文件
+# 放置在网站根目录（htdocs/）
+
+# 启用重写引擎
+RewriteEngine On
+
+# 设置基础目录（根据您的实际部署路径调整）
+# RewriteBase /
+
+# 1. 强制HTTPS（如果启用SSL证书，取消注释）
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+# 2. 移除 index.php 扩展名（美化URL）
+# 将 /article.php?id=123 重写为 /article/123
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^article/([0-9]+)/?$ article.php?id=$1 [L,QSA]
+
+# 将 /category.php?id=2 重写为 /category/2
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^category/([0-9]+)/?$ category.php?id=$1 [L,QSA]
+
+# 3. 错误页面重定向
+ErrorDocument 404 /404.php
+ErrorDocument 403 /403.php
+ErrorDocument 500 /500.php
+
+# 4. 安全防护
+# 禁止访问敏感文件
+<FilesMatch "\.(env|log|ini|sql|bak|config)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# 禁止访问 includes 目录（直接访问）
+<IfModule mod_rewrite.c>
+    RewriteRule ^includes/ - [F,L]
+</IfModule>
+
+# 5. 性能优化：启用压缩
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# 6. 浏览器缓存设置（提升加载速度）
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # 图片缓存1个月
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType image/x-icon "access plus 1 month"
+    
+    # CSS、JS缓存1周
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType text/javascript "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+    
+    # 字体文件缓存1个月
+    ExpiresByType font/ttf "access plus 1 month"
+    ExpiresByType font/otf "access plus 1 month"
+    ExpiresByType font/woff "access plus 1 month"
+    ExpiresByType font/woff2 "access plus 1 month"
+    ExpiresByType application/font-woff "access plus 1 month"
+    
+    # HTML不缓存（动态内容）
+    ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+# 7. 防止目录浏览
+Options -Indexes
+
+# 8. 设置默认字符集
+AddDefaultCharset UTF-8
+
+# 9. PHP配置覆盖（如果主机允许）
+# php_value upload_max_filesize 10M
+# php_value post_max_size 12M
+# php_value max_execution_time 300
+# php_value max_input_time 300
