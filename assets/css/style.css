@@ -1,0 +1,150 @@
+/* 2308班新闻网站自定义样式 */
+
+/* 基础样式优化 */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f8f9fa;
+}
+
+/* 导航栏优化 */
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+/* 卡片悬停效果 */
+.hover-shadow {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-shadow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+}
+
+/* 新闻内容样式 */
+.news-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+}
+
+.news-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+}
+
+.news-content p {
+    margin-bottom: 1.5rem;
+}
+
+.news-content h2,
+.news-content h3,
+.news-content h4 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.news-content ul,
+.news-content ol {
+    padding-left: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.news-content blockquote {
+    border-left: 4px solid #0d6efd;
+    padding-left: 1rem;
+    margin-left: 0;
+    font-style: italic;
+    color: #666;
+}
+
+/* 侧边栏调整 */
+.card {
+    border: 1px solid rgba(0,0,0,.125);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.card-header {
+    background-color: rgba(0,0,0,.03);
+    border-bottom: 1px solid rgba(0,0,0,.125);
+    font-weight: 600;
+}
+
+/* 分页样式优化 */
+.pagination .page-link {
+    color: #0d6efd;
+    border: 1px solid #dee2e6;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+/* 面包屑导航 */
+.breadcrumb {
+    background-color: transparent;
+    padding: 0.75rem 0;
+    margin-bottom: 1rem;
+}
+
+.breadcrumb-item a {
+    color: #6c757d;
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    color: #0d6efd;
+}
+
+/* 标签和徽章 */
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+/* 列表组项目悬停 */
+.list-group-item-action:hover {
+    background-color: #f8f9fa;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .display-5 {
+        font-size: 1.8rem;
+    }
+    
+    .news-content {
+        font-size: 1rem;
+    }
+    
+    .card-img-top {
+        height: 150px !important;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    .navbar, 
+    .sidebar, 
+    footer,
+    .no-print {
+        display: none !important;
+    }
+    
+    .container {
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
+    
+    .news-content {
+        font-size: 12pt !important;
+        line-height: 1.5 !important;
+    }
+}
